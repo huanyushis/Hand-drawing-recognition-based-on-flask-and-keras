@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>js画板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body,
+        .container {
+            height: 100%;
+        }
+
+        #controls {
+            padding-left: 20px;
+            height: 60px;
+            line-height: 60px;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+            margin-left: 20px;
+        }
+
+        #controls li {
+            list-style: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        #img {
+            width: 1000px;
+            height: 400px;
+            background: #eee;
+            display: inline-block;
+            margin-left: 20px;
+        }
+
+        .word {
+            margin: 10px 0 10px 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <ul id="controls">
+        <li>
+            <!--                    <button id="redo">撤销</button>-->
+            <button id="clear">清空</button>
+            <!--                    <button id="save">保存</button>-->
+        </li>
+    </ul>
+    <div class="word">canvas面板:</div>
+    <canvas width="1000px" height="400px"></canvas>
+    <div class="word">显示保存的图片:</div>
+    <img src="" id="img" alt=""/>
+</div>
+
+<script>
+    var canvas = document.querySelector("canvas");
+    var canvasObj = canvas.getContext("2d");
+    var shape = document.querySelector("#shape");
+    var color = document.querySelector("#color");
+    var width = document.querySelector("#width");
+    var style = document.querySelector("#style");
+    var side = document.querySelector("#side");
+    // var redo = document.querySelector("#redo");
+    // var save = document.querySelector("#save");
+    var clear = document.querySelector("#clear");
+    var data = [];
+    var s = "pen";
+    var c = "#000";
+    var w = "2";
+    var st = "stroke";
+    var sd = "3";
+    canvas.onmousedown = function (e) {   //canvas上按下鼠标事件
+        var ox = e.offsetX;
+        var oy = e.offsetY;
+        var draw = new Draw(canvasObj, {
+            color: c,
+            width: w,
+            style: st,
+            side: sd
+        });
+        if (s === "pen") {
+            canvasObj.beginPath();
+            canvasObj.moveTo(ox, oy);
+        }
+        canvas.onmousemove = function (e) {     //移动事件
+            var mx = e.offsetX;
+            var my = e.offsetY;
+            if (s !== "eraser") {
+                canvasObj.clearRect(0, 0, 1000, 400);
+                if (data.length !== 0) {
+                    canvasObj.putImageData(data[data.length - 1], 0, 0, 0, 0, 1000, 400); //将数据添加到画布中
+                }
+            }
+            draw[s](ox, oy, mx, my, sd);
+        };
+        document.onmouseup = function () {
+            data.push(canvasObj.getImageData(0, 0, 1000, 400)); //获取画布中的数据
+            canvas.onmousemove = null;
+            document.onmouseup = null;
+            var r = canvas.toDataURL();
+            var obj = JSON.stringify({'userNo':'121589','processId':'15','processName':'测试审批','description':'这是一个测试'});
+
+            console.log(r);
+            $.ajax({
+                url: 'http://127.0.0.1:5000/lll',
+                dataType:'json',
+                contentType : "application/json",
+                method: 'post',
+                data: obj,
+                success: (res) => {
+                    console.log(res);
+                },
+                error: (err) => {
+                    console.log(err);
+                }
+            })
+        }
+    };
+    // redo.onclick = function() {   //撤回
+    //     if(data.length == 0) {
+    //         alert("没有可以撤销的内容了");
+    //         return;
+    //     }
+    //     canvasObj.clearRect(0, 0, 1000, 400);
+    //     data.pop();
+    //     if(data.length == 0) {
+    //         return;
+    //     }
+    //     canvasObj.putImageData(data[data.length - 1], 0, 0, 0, 0, 1000, 400);
+    // };
+    // save.onclick = function () {    //保存
+    //
+    // };
+    clear.onclick = function () {   //清除
+        canvasObj.clearRect(0, 0, 1000, 400);
+        data = [];
+    }
+
+    class Draw {
+        constructor(canvasObj, option) {
+            this.canvasObj = canvasObj;
+            this.color = option.color;
+            this.width = option.width;
+            this.style = option.style;
+        }
+
+        init() { //初始化
+            this.canvasObj.strokeStyle = this.color;
+            this.canvasObj.fillStyle = this.color;
+            this.canvasObj.lineWidth = this.width;
+        }
+
+        pen(ox, oy, mx, my) {
+            this.init();
+            this.canvasObj.lineTo(mx, my);
+            this.canvasObj.stroke();
+        }
+
+        eraser(ox, oy, mx, my) {
+            console.log(canvas.style)
+            console.log(canvas.style.cursor)
+            this.canvasObj.clearRect(mx, my, 20, 20);
+        }
+    }
+</script>
+</body>
+</html>
